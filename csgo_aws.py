@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 #
-# This is the script to create a CS:GO Server on AWS
+# Troposphere script to create a CS:GO Server on AWS
 # Components created by this script
-# - VPC
-# - Subnet
-# - Gateway
-# - Route table
-# - EC2 Instance
 
 from troposphere import Base64, FindInMap, GetAtt, Join, Output
 from troposphere import Parameter, Ref, Tags, Template
@@ -92,8 +87,8 @@ t.add_mapping('AWSRegionArch2AMI', {
 })
 
 ref_stack_id = Ref('AWS::StackId')
-ref_region = config_file['vpc']['region']
-ref_stack_name = config_file['cf']['name']
+ref_region = Ref('AWS::Region')
+ref_stack_name = Ref('AWS::StackName')
 
 # VPC Parameters
 VPC = t.add_resource(
