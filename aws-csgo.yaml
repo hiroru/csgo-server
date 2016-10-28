@@ -68,17 +68,16 @@ Resources:
           mkdir /Steam && cd /Steam
           wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
           tar -xvzf steamcmd_linux.tar.gz
-          mkdir -p ~/.steam/sdk32/
-          ln -s ~/Steam/linux32/steamclient.so ~/.steam/sdk32/steamclient.so
           /Steam/steamcmd.sh +login anonymous +force_install_dir /Steam/csgo-ds +app_update 740 +quit
+          echo "rcon_password \"zweibierbitte\"" >> /Steam/csgo-ds/csgo/cfg/server.cfg
           echo "mp_autoteambalance 0" >> /Steam/csgo-ds/csgo/cfg/server.cfg
           echo "mp_randomspawn 1" >> /Steam/csgo-ds/csgo/cfg/server.cfg
           echo "mp_teammates_are_enemies 1" >> /Steam/csgo-ds/csgo/cfg/server.cfg
           echo "bot_quota 0" >> /Steam/csgo-ds/csgo/cfg/server.cfg
-          echo "mp_autoteambalance 0" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace_server.cfg
-          echo "mp_randomspawn 1" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace_server.cfg
-          echo "mp_teammates_are_enemies 1" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace_server.cfg
-          echo "bot_quota 0" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace_server.cfg
+          echo "mp_autoteambalance 0" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace.cfg
+          echo "mp_randomspawn 1" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace.cfg
+          echo "mp_teammates_are_enemies 1" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace.cfg
+          echo "bot_quota 0" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace.cfg
           /Steam/csgo-ds/srcds_run -game csgo -console -usercon +game_type 1 +game_mode 0 +mapgroup mg_armsrace +map de_safehouse -nobots +sv_setsteamaccount ${GSLT}
     Type: AWS::EC2::Instance
   SecurityGroup:
@@ -109,11 +108,12 @@ Resources:
       - Key: Name
         Value: !Join [ "-", [SG-CSGO, !Ref Project] ]
     Type: AWS::EC2::SecurityGroup
-    #  DNS:
-    #    Type: AWS::Route53::RecordSet
-    #    Properties:
-    #      HostedZoneName: !Ref HostedZone
-    #      Comment: CNAME for the server
-    #      Name: !Join [ ".", [csgo, !Ref HostedZone] ]
-    #      Type: CNAME
-    #      ResourceRecords: [ !GetAtt Instance.PublicDnsName ]
+  MyDNS:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Ref HostedZone
+      Comment: CNAME for the server
+      Name: !Join [ ".", [cs, !Ref HostedZone] ]
+      Type: CNAME
+      TTL: 300
+      ResourceRecords: [ !GetAtt Instance.PublicDnsName ]
