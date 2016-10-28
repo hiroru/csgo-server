@@ -31,6 +31,22 @@ Parameters:
     MaxLength: '255'
     MinLength: '1'
     Type: String
+  HostedZone:
+    AllowedPattern: "[\\x20-\\x7E]*"
+    ConstraintDescription: can contain only ASCII characters.
+    Default: example.com.
+    Description: zone name
+    MaxLength: '255'
+    MinLength: '1'
+    Type: String
+  GSLT:
+    AllowedPattern: "[\\x20-\\x7E]*"
+    ConstraintDescription: can contain only ASCII characters.
+    Default: 1111
+    Description: Game Server Login Token
+    MaxLength: '255'
+    MinLength: '1'
+    Type: String
 Resources:
   Instance:
     Properties:
@@ -38,27 +54,31 @@ Resources:
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyName
       SecurityGroups: [!Ref SecurityGroup]
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20  # CSGO is quite big, 12 GB...
       Tags:
       - Key: Name
         Value: !Join [ "-", [EC2-CSGO, !Ref Project] ]
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -ex
-          apt-get install lib32gcc1 screen
+          apt-get install lib32gcc1 -y
           mkdir /Steam && cd /Steam
           wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
           tar -xvzf steamcmd_linux.tar.gz
           mkdir -p ~/.steam/sdk32/
-          ln -s /Steam/linux32/steamclient.so ~/.steam/sdk32/steamclient.so
+          ln -s ~/Steam/linux32/steamclient.so ~/.steam/sdk32/steamclient.so
           /Steam/steamcmd.sh +login anonymous +force_install_dir /Steam/csgo-ds +app_update 740 +quit
           echo "mp_autoteambalance 0" >> /Steam/csgo-ds/csgo/cfg/server.cfg
           echo "mp_randomspawn 1" >> /Steam/csgo-ds/csgo/cfg/server.cfg
           echo "mp_teammates_are_enemies 1" >> /Steam/csgo-ds/csgo/cfg/server.cfg
-          /Steam/csgo-ds/srcds_run -game csgo -console -usercon +game_type 1 +game_mode 0 +mapgroup mg_armsrace
+          /Steam/csgo-ds/srcds_run -game csgo -console -usercon +game_type 1 +game_mode 0 +mapgroup mg_armsrace +sv_setsteamaccount !Ref GSLT
     Type: AWS::EC2::Instance
   SecurityGroup:
     Properties:
-      GroupDescription: 'Enable SSH access to the instance. '
+      GroupDescription: 'Enable access to the instance. '
       SecurityGroupIngress:
       - CidrIp: 0.0.0.0/0
         FromPort: '22'
@@ -68,7 +88,27 @@ Resources:
         FromPort: '27015'
         IpProtocol: tcp
         ToPort: '27015'
+      - CidrIp: 0.0.0.0/0
+        FromPort: '26900'
+        IpProtocol: udp
+        ToPort: '27030'
+      - CidrIp: 0.0.0.0/0
+        FromPort: '27000'
+        IpProtocol: udp
+        ToPort: '27030'
+      - CidrIp: 0.0.0.0/0
+        FromPort: '4380'
+        IpProtocol: udp
+        ToPort: '4380'
       Tags:
       - Key: Name
         Value: !Join [ "-", [SG-CSGO, !Ref Project] ]
     Type: AWS::EC2::SecurityGroup
+    #  DNS:
+    #    Type: AWS::Route53::RecordSet
+    #    Properties:
+    #      HostedZoneName: !Ref HostedZone
+    #      Comment: CNAME for the server
+    #      Name: !Join [ ".", [csgo, !Ref HostedZone] ]
+    #      Type: CNAME
+    #      ResourceRecords: [ !GetAtt Instance.PublicDnsName ]
