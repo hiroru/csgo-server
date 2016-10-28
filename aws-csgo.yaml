@@ -15,7 +15,7 @@ Parameters:
     - t2.medium
     - c4.large
     ConstraintDescription: must be a valid EC2 instance type.
-    Default: t2.nano
+    Default: t2.micro
     Description: Instance type for EC2 instance.
     Type: String
   KeyName:
@@ -74,7 +74,12 @@ Resources:
           echo "mp_autoteambalance 0" >> /Steam/csgo-ds/csgo/cfg/server.cfg
           echo "mp_randomspawn 1" >> /Steam/csgo-ds/csgo/cfg/server.cfg
           echo "mp_teammates_are_enemies 1" >> /Steam/csgo-ds/csgo/cfg/server.cfg
-          /Steam/csgo-ds/srcds_run -game csgo -console -usercon +game_type 1 +game_mode 0 +mapgroup mg_armsrace +sv_setsteamaccount !Ref GSLT
+          echo "bot_quota 0" >> /Steam/csgo-ds/csgo/cfg/server.cfg
+          echo "mp_autoteambalance 0" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace_server.cfg
+          echo "mp_randomspawn 1" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace_server.cfg
+          echo "mp_teammates_are_enemies 1" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace_server.cfg
+          echo "bot_quota 0" >> /Steam/csgo-ds/csgo/cfg/gamemode_armsrace_server.cfg
+          /Steam/csgo-ds/srcds_run -game csgo -console -usercon +game_type 1 +game_mode 0 +mapgroup mg_armsrace +map de_safehouse -nobots +sv_setsteamaccount ${GSLT}
     Type: AWS::EC2::Instance
   SecurityGroup:
     Properties:
